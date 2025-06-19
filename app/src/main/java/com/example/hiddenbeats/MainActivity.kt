@@ -1,47 +1,48 @@
 package com.example.hiddenbeats
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.hiddenbeats.ui.theme.HiddenBeatsTheme
 
 class MainActivity : ComponentActivity() {
+    private val clientId = BuildConfig.SPOTIFY_CLIENT_ID
+    private val redirectUri = "http://com.example.hiddenbeats/callback"
+    private lateinit var spotifyController: SpotifyController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        Log.d("xD", clientId)
+        spotifyController = SpotifyController(this, clientId, redirectUri)
+
         setContent {
             HiddenBeatsTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                Scaffold { innerPadding ->
+                    PlayerScreen(
+                        onPlay = { spotifyController.play("spotify:track:4PTG3Z6ehGkBFwjybzWkR8") },
+                        onPause = { spotifyController.pause() }
                     )
                 }
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    override fun onStart() {
+        super.onStart()
+        spotifyController.connect(
+            onConnected = { Log.d("MainActivity", "Connected to Spotify") },
+            onFailure = { Log.e("MainActivity", "Spotify connection failed", it) }
+        )
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HiddenBeatsTheme {
-        Greeting("Android")
+    override fun onStop() {
+        super.onStop()
+        spotifyController.disconnect()
     }
 }

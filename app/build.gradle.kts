@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+val spotifyClientId = rootProject
+    .file("local.properties")
+    .inputStream()
+    .use { Properties().apply { load(it) } }
+    .getProperty("SPOTIFY_CLIENT_ID") ?: "\"\""
 
 android {
     namespace = "com.example.hiddenbeats"
@@ -16,6 +24,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
     }
 
     buildTypes {
@@ -36,10 +46,15 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
+    implementation(files("libs/spotify-app-remote-release-0.8.0.aar"))
+    implementation("com.google.code.gson:gson:2.6.1")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
