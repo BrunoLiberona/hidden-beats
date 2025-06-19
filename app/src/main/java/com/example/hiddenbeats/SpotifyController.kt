@@ -33,8 +33,23 @@ class SpotifyController(
         })
     }
 
-    fun play(uri: String) {
+    fun playTrackById(
+        id: String,
+        onSuccess: (String) -> Unit,
+        onFailure: () -> Unit
+    ) {
+        val uri = "spotify:track:$id"
         spotifyAppRemote?.playerApi?.play(uri)
+
+        spotifyAppRemote?.playerApi
+            ?.subscribeToPlayerState()
+            ?.setEventCallback { playerState ->
+                if (playerState.track == null) {
+                    onFailure()
+                } else {
+                    onSuccess(playerState.track.name ?: "Canción sin nombre")
+                }
+            }
     }
 
     fun pause() {
