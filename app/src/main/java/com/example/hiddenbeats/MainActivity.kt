@@ -9,6 +9,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import com.example.hiddenbeats.ui.theme.HiddenBeatsTheme
 import android.widget.Toast
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private val clientId = BuildConfig.SPOTIFY_CLIENT_ID
@@ -25,6 +26,16 @@ class MainActivity : ComponentActivity() {
             HiddenBeatsTheme {
                 var isPlaying by remember { mutableStateOf(false) }
                 var hasTrackLoaded by remember { mutableStateOf(false) }
+                var playbackProgress by remember { mutableFloatStateOf(0f) }
+
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        delay(500) // cada 1/2 segundo
+                        spotifyController.getPlayerProgress { position, duration ->
+                            playbackProgress = if (duration > 0) position / duration.toFloat() else 0f
+                        }
+                    }
+                }
 
                 Scaffold { _ ->
                     PlayerScreen(
@@ -34,9 +45,11 @@ class MainActivity : ComponentActivity() {
                                 onSuccess = { trackName ->
                                     isPlaying = true
                                     hasTrackLoaded = true
-                                    Log.d("Success", "Reproduciendo: $trackName")
+                                    Log.d("Spotify", "Reproduciendo: $trackName")
+                                    Toast.makeText(this, "Reproduciendo: $trackName", Toast.LENGTH_SHORT).show()
                                 },
                                 onFailure = {
+                                    Log.e("Spotify", "Song not found!")
                                     Toast.makeText(this, "El ID no es válido o no se pudo cargar.", Toast.LENGTH_SHORT).show()
                                 }
                             )
@@ -55,7 +68,11 @@ class MainActivity : ComponentActivity() {
                             hasTrackLoaded = false
                         },
                         isPlaying = isPlaying,
-                        hasTrackLoaded = hasTrackLoaded
+                        hasTrackLoaded = hasTrackLoaded,
+                        onSeekTo = { fraction ->
+                            spotifyController.seekToFraction(fraction)
+                        },
+                        playbackPositionFraction = playbackProgress,
                     )
                 }
             }

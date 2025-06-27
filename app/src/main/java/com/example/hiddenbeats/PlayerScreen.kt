@@ -13,6 +13,8 @@ fun PlayerScreen(
     onPlayUri: (String) -> Unit,
     onTogglePlayPause: () -> Unit,
     onStop: () -> Unit,
+    onSeekTo: (Float) -> Unit,
+    playbackPositionFraction: Float,
     isPlaying: Boolean,
     hasTrackLoaded: Boolean
 ) {
@@ -46,14 +48,23 @@ fun PlayerScreen(
                 Text("▶ Reproducir")
             }
         } else {
-            Row {
-                Button(onClick = onTogglePlayPause, modifier = Modifier.padding(end = 8.dp)) {
-                    Text(if (isPlaying) "⏸ Pausar" else "▶ Reanudar")
-                }
-                Button(onClick = onStop) {
-                    Text("⏹ Detener")
-                }
-            }
+//            Row {
+//                Button(onClick = onTogglePlayPause, modifier = Modifier.padding(end = 8.dp)) {
+//                    Text(if (isPlaying) "⏸ Pausar" else "▶ Reanudar")
+//                }
+//                Button(onClick = onStop) {
+//                    Text("⏹ Detener")
+//                }
+//            }
+            CircularSeekBar(
+                progress = playbackPositionFraction,
+                onProgressChange = { newProgress ->
+                    onSeekTo(newProgress)
+                },
+                isPlaying = isPlaying,
+                onPlayPause = onTogglePlayPause,
+                onStop = onStop
+            )
         }
     }
 }

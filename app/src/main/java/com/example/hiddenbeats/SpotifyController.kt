@@ -44,9 +44,7 @@ class SpotifyController(
         spotifyAppRemote?.playerApi
             ?.subscribeToPlayerState()
             ?.setEventCallback { playerState ->
-                if (playerState.track == null) {
-                    onFailure()
-                } else {
+                if (!playerState.isPaused) {
                     onSuccess(playerState.track.name ?: "Canción sin nombre")
                 }
             }
@@ -58,6 +56,22 @@ class SpotifyController(
 
     fun resume() {
         spotifyAppRemote?.playerApi?.resume()
+    }
+
+    fun seekToFraction(fraction: Float) {
+        spotifyAppRemote?.playerApi?.getPlayerState()?.setResultCallback { state ->
+            val duration = state.track?.duration ?: 0
+            val target = (duration * fraction).toLong()
+            spotifyAppRemote?.playerApi?.seekTo(target)
+        }
+    }
+
+    fun getPlayerProgress(onResult: (Long, Long) -> Unit) {
+        spotifyAppRemote?.playerApi?.getPlayerState()?.setResultCallback { state ->
+            val position = state.playbackPosition
+            val duration = state.track?.duration ?: 0
+            onResult(position, duration)
+        }
     }
 
     fun disconnect() {
