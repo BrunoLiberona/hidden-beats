@@ -48,7 +48,10 @@ fun CircularSeekBar(
 
                     // Detecta tap y mueve thumb ahí
                     if (dist >= minTouchRadius) {
-                        val sizeF = androidx.compose.ui.geometry.Size(size.width.toFloat(), size.height.toFloat())
+                        val sizeF = androidx.compose.ui.geometry.Size(
+                            size.width.toFloat(),
+                            size.height.toFloat()
+                        )
                         val angle = angleFromCenter(offset, sizeF)
                         val normalized = angle / 360f
                         onProgressChange(normalized)
@@ -61,7 +64,10 @@ fun CircularSeekBar(
                         isDragging = true
                     },
                     onDrag = { change, _ ->
-                        val sizeF = androidx.compose.ui.geometry.Size(size.width.toFloat(), size.height.toFloat())
+                        val sizeF = androidx.compose.ui.geometry.Size(
+                            size.width.toFloat(),
+                            size.height.toFloat()
+                        )
                         val angle = angleFromCenter(change.position, sizeF)
                         tempProgress = angle / 360f
                     },

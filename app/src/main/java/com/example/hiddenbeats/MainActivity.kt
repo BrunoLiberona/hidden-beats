@@ -27,10 +27,17 @@ class MainActivity : ComponentActivity() {
                 var isPlaying by remember { mutableStateOf(false) }
                 var hasTrackLoaded by remember { mutableStateOf(false) }
                 var playbackProgress by remember { mutableFloatStateOf(0f) }
+                var suppressProgress by remember { mutableStateOf(20) }
 
                 LaunchedEffect(Unit) {
                     while (true) {
-                        delay(500) // cada 1/2 segundo
+                        delay(100)
+
+                        if (suppressProgress < 20) {
+                            suppressProgress += 1
+                            continue
+                        }
+
                         spotifyController.getPlayerProgress { position, duration ->
                             playbackProgress = if (duration > 0) position / duration.toFloat() else 0f
                         }
@@ -70,6 +77,8 @@ class MainActivity : ComponentActivity() {
                         isPlaying = isPlaying,
                         hasTrackLoaded = hasTrackLoaded,
                         onSeekTo = { fraction ->
+                            suppressProgress = 0
+                            playbackProgress = fraction
                             spotifyController.seekToFraction(fraction)
                         },
                         playbackPositionFraction = playbackProgress,
