@@ -8,12 +8,12 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 
 class SpotifyController(
     private val context: Context,
-    private val clientId: String,
-    private val redirectUri: String
 ) {
+    private val clientId = BuildConfig.SPOTIFY_CLIENT_ID
+    private val redirectUri = "http://com.example.hiddenbeats/callback"
     private var spotifyAppRemote: SpotifyAppRemote? = null
 
-    fun connect(onConnected: () -> Unit, onFailure: (Throwable) -> Unit) {
+    fun connect(onConnected: () -> Unit) {
         val connectionParams = ConnectionParams.Builder(clientId)
             .setRedirectUri(redirectUri)
             .showAuthView(true)
@@ -28,7 +28,6 @@ class SpotifyController(
 
             override fun onFailure(throwable: Throwable) {
                 Log.e("SpotifyController", "Connection failed", throwable)
-                onFailure(throwable)
             }
         })
     }
@@ -36,9 +35,11 @@ class SpotifyController(
     fun playTrackById(
         id: String,
         onSuccess: (String) -> Unit,
+        // TODO: Use this method with a pre-check of the existence of the song with the uri using the Spotify API
         onFailure: () -> Unit
     ) {
         val uri = "spotify:track:$id"
+
         spotifyAppRemote?.playerApi?.play(uri)
 
         spotifyAppRemote?.playerApi

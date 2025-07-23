@@ -1,22 +1,19 @@
 package com.example.hiddenbeats
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import kotlinx.coroutines.delay
 
 @Composable
 fun PlayerScreen(
@@ -28,16 +25,37 @@ fun PlayerScreen(
     isPlaying: Boolean,
     hasTrackLoaded: Boolean
 ) {
-    var uriInput by remember { mutableStateOf(TextFieldValue("")) }
+    var scannedText by remember { mutableStateOf<String?>(null) }
+    var shouldAutoPlay by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val scanLauncher = rememberLauncherForActivityResult(
         contract = ScanContract(),
         onResult = { result ->
-            result.contents?.let { scannedText ->
-                uriInput = TextFieldValue(scannedText)
+            result.contents?.let { scanned ->
+                scannedText = scanned
+                shouldAutoPlay = true
             }
         }
     )
+
+    LaunchedEffect(scannedText) {
+        if (shouldAutoPlay && scannedText != null) {
+            isLoading = true
+            Log.d("PlayerScreen", "Triggered with scannedText: $scannedText")
+
+            delay(1000)
+
+            onPlayUri(scannedText!!)
+            shouldAutoPlay = false
+        }
+    }
+
+    LaunchedEffect(hasTrackLoaded) {
+        if (isLoading && hasTrackLoaded) {
+            isLoading = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -48,38 +66,41 @@ fun PlayerScreen(
     ) {
         Text("HiddenBeats 🎧", style = MaterialTheme.typography.headlineMedium)
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        IconButton(onClick = {
-            scanLauncher.launch(
-                ScanOptions().apply {
-                    setPrompt("Escanea un QR de canción")
-                    setBeepEnabled(true)
-                    setOrientationLocked(true)
-                    setCaptureActivity(PortraitCaptureActivity::class.java)
-                }
-            )
-        }) {
-            Icon(Icons.Filled.QrCodeScanner, contentDescription = "Escanear QR")
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         if (!hasTrackLoaded) {
-            OutlinedTextField(
-                value = uriInput,
-                onValueChange = { uriInput = it },
-                label = { Text("URI de Spotify") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
             Button(
-                onClick = { onPlayUri(uriInput.text) },
-                enabled = uriInput.text.isNotBlank()
+                onClick = {
+                    scanLauncher.launch(
+                        ScanOptions().apply {
+                            setPrompt("Escanea el QR de la canción")
+                            setOrientationLocked(true)
+                            setCaptureActivity(PortraitCaptureActivity::class.java)
+                        }
+                    )
+                },
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
+                enabled = !isLoading
             ) {
-                Text("▶ Reproducir")
+                if (!isLoading) {
+                    Text(
+                        "Escanear QR",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp
+                        )
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.Black,
+                    )
+                }
             }
         } else {
             CircularSeekBar(

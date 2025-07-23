@@ -12,22 +12,19 @@ import android.widget.Toast
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
-    private val clientId = BuildConfig.SPOTIFY_CLIENT_ID
-    private val redirectUri = "http://com.example.hiddenbeats/callback"
     private lateinit var spotifyController: SpotifyController
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        spotifyController = SpotifyController(this, clientId, redirectUri)
+        spotifyController = SpotifyController(this)
 
         setContent {
             HiddenBeatsTheme {
                 var isPlaying by remember { mutableStateOf(false) }
                 var hasTrackLoaded by remember { mutableStateOf(false) }
                 var playbackProgress by remember { mutableFloatStateOf(0f) }
-                var suppressProgress by remember { mutableStateOf(20) }
+                var suppressProgress by remember { mutableIntStateOf(20) }
 
                 LaunchedEffect(Unit) {
                     while (true) {
@@ -47,13 +44,13 @@ class MainActivity : ComponentActivity() {
                 Scaffold { _ ->
                     PlayerScreen(
                         onPlayUri = { trackId ->
+                            Log.d("Spotify", "Called with trackId: $trackId")
                             spotifyController.playTrackById(
                                 id = trackId,
                                 onSuccess = { trackName ->
                                     isPlaying = true
                                     hasTrackLoaded = true
-                                    Log.d("Spotify", "Reproduciendo: $trackName")
-                                    Toast.makeText(this, "Reproduciendo: $trackName", Toast.LENGTH_SHORT).show()
+                                    Log.d("Spotify", "Playing: $trackName")
                                 },
                                 onFailure = {
                                     Log.e("Spotify", "Song not found!")
@@ -91,8 +88,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         spotifyController.connect(
-            onConnected = { Log.d("MainActivity", "Connected to Spotify") },
-            onFailure = { Log.e("MainActivity", "Spotify connection failed", it) }
+            onConnected = { Log.d("MainActivity", "Connected to Spotify") }
         )
     }
 
